@@ -1,0 +1,133 @@
+name: FDA / EU MDR Traceability Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  traceability-check:
+    name: Traceability — FDA / EU MDR Audit Gate
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check traceability manifest
+        id: trace-check
+        run: |
+          echo "Checking for traceability evidence manifest..."
+          MISSING_EVIDENCE=0
+
+          if [ ! -f traceability/change-evidence.json ]; then
+            echo "::warning title=Missing Change Evidence::traceability/change-evidence.json not found"
+            MISSING_EVIDENCE=$((MISSING_EVIDENCE + 1))
+          fi
+
+          if [ ! -f traceability/test-evidence.json ]; then
+            echo "::warning title=Missing Test Evidence::traceability/test-evidence.json not found"
+            MISSING_EVIDENCE=$((MISSING_EVIDENCE + 1))
+          fi
+
+          if [ ! -f traceability/review-records.json ]; then
+            echo "::warning title=Missing Review Records::traceability/review-records.json not found"
+            MISSING_EVIDENCE=$((MISSING_EVIDENCE + 1))
+          fi
+
+          echo "missing_count=$MISSING_EVIDENCE" >> $GITHUB_OUTPUT
+
+          if [ "$MISSING_EVIDENCE" -gt 0 ]; then
+            echo "trace_complete=false" >> $GITHUB_OUTPUT
+            echo "::error title=Incomplete Traceability Evidence::$MISSING_EVIDENCE required traceability artifact(s) missing. FDA 21 CFR Part 11 and EU MDR Annex IX require continuous audit evidence."
+          else
+            echo "trace_complete=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate recent change coverage
+        id: coverage-check
+        if: steps.trace-check.outputs.trace_complete == 'false'
+        run: |
+          RECENT_COMMITS=$(git log --oneline -10 | wc -l)
+          echo "Recent commits without full traceability coverage: $RECENT_COMMITS"
+
+      - name: Generate SARIF finding
+        if: steps.trace-check.outputs.trace_complete == 'false'
+        run: |
+          cat > traceability-findings.sarif << 'EOF'
+          {
+            "version": "2.1.0",
+            "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+            "runs": [
+              {
+                "tool": {
+                  "driver": {
+                    "name": "CCI Governance / Traceability",
+                    "version": "1.0.0",
+                    "rules": [
+                      {
+                        "id": "CCI-AUDIT-001",
+                        "name": "IncompleteTraceabilityEvidence",
+                        "shortDescription": { "text": "Incomplete FDA / EU MDR Traceability Evidence" },
+                        "fullDescription": { "text": "Recent regulated changes do not have complete audit evidence required by FDA 21 CFR Part 11 and EU MDR Annex IX." },
+                        "help": { "text": "Generate change-evidence.json, test-evidence.json, and review-records.json for all regulated changes. Link to requirements in traceability matrix." },
+                        "properties": {
+                          "tags": ["audit", "fda", "eu-mdr", "regulated", "traceability"],
+                          "severity": "medium",
+                          "owner": "Compliance Engineering",
+                          "policy": "FDA / EU MDR Traceability Required",
+                          "remediationEffortHours": 20,
+                          "estimatedNonComplianceCost": 90000
+                        }
+                      }
+                    ]
+                  }
+                },
+                "results": [
+                  {
+                    "ruleId": "CCI-AUDIT-001",
+                    "level": "warning",
+                    "message": { "text": "Incomplete traceability evidence for regulated software changes. Required artifacts missing: change-evidence.json, test-evidence.json, review-records.json. Recent changes are not fully covered by audit trail required under FDA 21 CFR Part 11 and EU MDR Annex IX. Estimated non-compliance cost: $90,000. Remediation effort: 20 hours." },
+                    "locations": [
+                      {
+                        "physicalLocation": {
+                          "artifactLocation": { "uri": "traceability", "uriBaseId": "%SRCROOT%" },
+                          "region": { "startLine": 1 }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+          EOF
+
+      - name: Upload SARIF
+        if: steps.trace-check.outputs.trace_complete == 'false'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: traceability-findings.sarif
+          category: cci-traceability-governance
+
+      - name: Fail pipeline — traceability gate
+        if: steps.trace-check.outputs.trace_complete == 'false'
+        run: |
+          echo ""
+          echo "╔══════════════════════════════════════════════════════════════╗"
+          echo "║          CCI GOVERNANCE GATE FAILURE                        ║"
+          echo "╠══════════════════════════════════════════════════════════════╣"
+          echo "║  Policy:      FDA / EU MDR Traceability Required            ║"
+          echo "║  Severity:    MEDIUM                                         ║"
+          echo "║  Finding:     Incomplete traceability evidence              ║"
+          echo "║  Owner:       Compliance Engineering                         ║"
+          echo "║  Effort:      20 hours                                      ║"
+          echo "║  Cost Risk:   \$90,000                                       ║"
+          echo "╚══════════════════════════════════════════════════════════════╝"
+          exit 1
