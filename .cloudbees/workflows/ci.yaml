@@ -16,6 +16,7 @@ jobs:
         uses: cloudbees-io/trufflehog-secret-scan-code@v1
         with:
           image-tag: v3
+          branch: main
 
   sast-scan:
     needs:
@@ -57,7 +58,7 @@ jobs:
         with:
           name: surgical-analytics
           version: 3.2.${{ cloudbees.run_number }}
-          url: https://github.com/cloudbees-days/stryker-surgical-analytics
+          url: https://github.com/shozab-unify-examples/stryker-surgical-analytics
       - name: Publish build evidence
         uses: cloudbees-io/publish-evidence-item@v1
         with:
@@ -84,7 +85,7 @@ jobs:
           name: surgical-analytics
           version: 3.2.${{ cloudbees.run_number }}
           environment-name: surgical-analytics-dev
-          url: https://github.com/cloudbees-days/stryker-surgical-analytics
+          url: https://github.com/shozab-unify-examples/stryker-surgical-analytics
 
   deploy-staging:
     needs:
@@ -100,7 +101,7 @@ jobs:
           name: surgical-analytics
           version: 3.2.${{ cloudbees.run_number }}
           environment-name: surgical-analytics-staging
-          url: https://github.com/cloudbees-days/stryker-surgical-analytics
+          url: https://github.com/shozab-unify-examples/stryker-surgical-analytics
 
   deploy-prod:
     needs:
@@ -116,4 +117,4 @@ jobs:
           name: surgical-analytics
           version: 3.2.${{ cloudbees.run_number }}
           environment-name: surgical-analytics-prod
-          url: https://github.com/cloudbees-days/stryker-surgical-analytics
+          url: https://github.com/shozab-unify-examples/stryker-surgical-analytics
