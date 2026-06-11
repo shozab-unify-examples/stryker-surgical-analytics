@@ -73,7 +73,6 @@ jobs:
   deploy-dev:
     needs:
       - build
-    environment: surgical-analytics-dev
     steps:
       - name: Deploy to Dev
         uses: docker://alpine:3.19
@@ -89,7 +88,6 @@ jobs:
   deploy-staging:
     needs:
       - deploy-dev
-    environment: surgical-analytics-staging
     steps:
       - name: Deploy to Staging
         uses: docker://alpine:3.19
@@ -105,7 +103,6 @@ jobs:
   deploy-prod:
     needs:
       - deploy-staging
-    environment: surgical-analytics-prod
     steps:
       - name: Deploy to Production
         uses: docker://alpine:3.19
