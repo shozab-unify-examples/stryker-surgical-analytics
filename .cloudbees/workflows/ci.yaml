@@ -78,7 +78,8 @@ jobs:
     steps:
       - name: Deploy to Dev
         uses: docker://alpine:3.19
-        run: echo "Deploying surgical-analytics v3.2.${{ cloudbees.run_number }} to DEV"
+        run: |
+          echo "Deploying surgical-analytics v3.2.${{ cloudbees.run_number }} to DEV"
       - name: Register deployed artifact
         uses: cloudbees-io/register-deployed-artifact@v2
         with:
@@ -95,7 +96,8 @@ jobs:
     steps:
       - name: Deploy to Staging
         uses: docker://alpine:3.19
-        run: echo "Deploying surgical-analytics v3.2.${{ cloudbees.run_number }} to STAGING"
+        run: |
+          echo "Deploying surgical-analytics v3.2.${{ cloudbees.run_number }} to STAGING"
       - name: Register deployed artifact
         uses: cloudbees-io/register-deployed-artifact@v2
         with:
@@ -112,7 +114,8 @@ jobs:
     steps:
       - name: Deploy to Production
         uses: docker://alpine:3.19
-        run: echo "Deploying surgical-analytics v3.2.${{ cloudbees.run_number }} to PRODUCTION"
+        run: |
+          echo "Deploying surgical-analytics v3.2.${{ cloudbees.run_number }} to PRODUCTION"
       - name: Register deployed artifact
         uses: cloudbees-io/register-deployed-artifact@v2
         with:
