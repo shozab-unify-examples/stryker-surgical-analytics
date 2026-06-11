@@ -86,7 +86,7 @@ jobs:
           artifact-id: ${{ needs.build.outputs.artifact-id }}
           name: surgical-analytics
           version: 3.2.${{ cloudbees.run_number }}
-          environment-name: stryker-dev
+          target-environment: stryker-dev
           url: https://github.com/shozab-unify-examples/stryker-surgical-analytics
 
   deploy-staging:
@@ -104,7 +104,7 @@ jobs:
           artifact-id: ${{ needs.build.outputs.artifact-id }}
           name: surgical-analytics
           version: 3.2.${{ cloudbees.run_number }}
-          environment-name: stryker-staging
+          target-environment: stryker-staging
           url: https://github.com/shozab-unify-examples/stryker-surgical-analytics
 
   deploy-prod:
@@ -122,5 +122,5 @@ jobs:
           artifact-id: ${{ needs.build.outputs.artifact-id }}
           name: surgical-analytics
           version: 3.2.${{ cloudbees.run_number }}
-          environment-name: stryker-prod
+          target-environment: stryker-prod
           url: https://github.com/shozab-unify-examples/stryker-surgical-analytics
