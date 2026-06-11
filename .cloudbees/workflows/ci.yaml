@@ -44,6 +44,8 @@ jobs:
     needs:
       - sast-scan
       - sca-scan
+    outputs:
+      artifact-id: ${{ steps.register-artifact.outputs.artifact-id }}
     steps:
       - name: Checkout
         uses: cloudbees-io/checkout@v1
@@ -53,6 +55,7 @@ jobs:
           pip install -r requirements.txt --quiet 2>/dev/null || echo "No requirements.txt"
           echo "Build complete — surgical-analytics v3.2.${{ cloudbees.run_number }}"
       - name: Register build artifact
+        id: register-artifact
         uses: cloudbees-io/register-build-artifact@v2
         with:
           name: surgical-analytics
@@ -67,7 +70,6 @@ jobs:
             - **Platform**: OSEP | Business Unit: OSEP Engineering
             - **Classification**: HIGH | analytics | clinical | regulated | osep
             - **Traceability**: OPEN FINDING — incomplete audit evidence for recent regulated changes
-            - **Owner**: Compliance Engineering
           format: MARKDOWN
 
   deploy-dev:
@@ -80,6 +82,7 @@ jobs:
       - name: Register deployed artifact
         uses: cloudbees-io/register-deployed-artifact@v2
         with:
+          artifact-id: ${{ needs.build.outputs.artifact-id }}
           name: surgical-analytics
           version: 3.2.${{ cloudbees.run_number }}
           environment-name: surgical-analytics-dev
@@ -87,6 +90,7 @@ jobs:
 
   deploy-staging:
     needs:
+      - build
       - deploy-dev
     steps:
       - name: Deploy to Staging
@@ -95,6 +99,7 @@ jobs:
       - name: Register deployed artifact
         uses: cloudbees-io/register-deployed-artifact@v2
         with:
+          artifact-id: ${{ needs.build.outputs.artifact-id }}
           name: surgical-analytics
           version: 3.2.${{ cloudbees.run_number }}
           environment-name: surgical-analytics-staging
@@ -102,6 +107,7 @@ jobs:
 
   deploy-prod:
     needs:
+      - build
       - deploy-staging
     steps:
       - name: Deploy to Production
@@ -110,6 +116,7 @@ jobs:
       - name: Register deployed artifact
         uses: cloudbees-io/register-deployed-artifact@v2
         with:
+          artifact-id: ${{ needs.build.outputs.artifact-id }}
           name: surgical-analytics
           version: 3.2.${{ cloudbees.run_number }}
           environment-name: surgical-analytics-prod
